@@ -32,15 +32,19 @@ namespace WebHost
 
 			appBuilder.Use(async (ctx, next) =>
 				{
-					// Buffer the output response.
+					// Intercept and buffer the output response.
 					var stream = ctx.Response.Body;
 					var buffer = new MemoryStream();
 					ctx.Response.Body = buffer;
 
+					// Allow the application to create a response.
 					await next();
 
+					// Restore the original stream and set the content-length.
 					ctx.Response.Body = stream;
 					ctx.Response.Headers["Content-Length"] = buffer.Length.ToString();
+
+					// Copy the buffered body to the output stream.
 					buffer.Seek(0, SeekOrigin.Begin);
 					await buffer.CopyToAsync(stream);
 				});
